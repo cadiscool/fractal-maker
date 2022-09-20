@@ -1,28 +1,35 @@
-#include <string>
+#include <iostream>
+#include <math.h>
+#include <cstring>
+using namespace std;
 
 
 class Bitmap{
 	public: 
 		int width;
 		int height;
-		string name;
+		int bufferCount; //Bitmaps have a series of buffer bits at the end of each row of pixels
+		char* name;
 		FILE* f;
 		unsigned char* address;
-		int filesize;
+		int fileSize;
+		int dataSize;
 
-		void Bitmap(int w, int h, string sname){
+		Bitmap(int w, int h, char* sname){
 
 			width = w;
 			height = h;
-			name = sname + ".bmp";
+			bufferCount = w%4; //We want each row to be a multiple of 4 bits in length, we do so by adding a buffer to the end of each one
+			name = sname;
 
-			filesize = 54 + 3 * (w + (w % 4)) * h; //Defines size of file in bytes, 54 bytes allocated for header data
-			address = (unsigned char*)malloc(3 * (w+ (w % 4)) * h ); //Allocates bytes for the pixel data, typecasts to a pointer to store in img
-			memset(img, 0, 3 * (w + (w % 4)) * h );
-			fopen_s(&f, sname, "wb");
+			fileSize = 54 + 3 * (w + (w % 4)) * h; //Defines size of file in bytes, 54 bytes allocated for header data
+			dataSize = 3 * (w + (w % 4)) * h; 
+			address = (unsigned char*)malloc(3 * (w+ (w % 4)) * h ); //Allocates bytes for the pixel data, typecasts to a pointer to store in address
+			memset(address, 0, 3 * (w + (w % 4)) * h );
+			f = fopen(sname, "wb");
 
 
-			//Write the headers 
+			//Header templates
 			unsigned char bmpfileheader[14] = { 'B','M', 
 				0,0,0,0, //These will be set to the size of the file in bytes
 				0,0,0,0, //Reserved?
@@ -36,11 +43,11 @@ class Bitmap{
 				24,0 //Bits per pixel, set to 8 bits per pixel (0-256)
 			};
 
-			bmpfileheader[2] = (unsigned char)(filesize);
-			bmpfileheader[3] = (unsigned char)(filesize >> 8);
-			bmpfileheader[4] = (unsigned char)(filesize >> 16);
-			bmpfileheader[5] = (unsigned char)(filesize >> 24);
-
+			//Adjust headers for filesize, width, and height 
+			bmpfileheader[2] = (unsigned char)(fileSize);
+			bmpfileheader[3] = (unsigned char)(fileSize >> 8);
+			bmpfileheader[4] = (unsigned char)(fileSize >> 16);
+			bmpfileheader[5] = (unsigned char)(fileSize >> 24);
 			bmpinfoheader[4] = (unsigned char)(w);
 			bmpinfoheader[5] = (unsigned char)(w >> 8);
 			bmpinfoheader[6] = (unsigned char)(w >> 16);
@@ -55,11 +62,51 @@ class Bitmap{
 
 		}
 
-		~Bitmap(){
-
+		void putPixel(int w, int h, int* rgb){
+			address[w*3 + ((width*3+bufferCount) * h)] = (unsigned char)rgb[0]; //red
+			address[w*3 + ((width*3+bufferCount) * h) + 1] = (unsigned char)rgb[1]; //green
+			address[w*3 + ((width*3+bufferCount) * h) + 2] = (unsigned char)rgb[2]; //blue
 		}
 
-		int putPixel(int w, int h, int[3] rgb){
-			img[]
+		void closeBitmap(){
+			fwrite(address, 1, dataSize, f);
+			free(address);
+			fclose(f);
 		}
+};
+
+void HSVtoRGB(double *hsv, int *rgb) {
+	double H = hsv[0];
+	double S = hsv[1];
+	double V = hsv[2];
+	double s = S / 100;
+	double v = V / 100;
+	double C = s * v;
+	double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
+	double m = v - C;
+	double r, g, b;
+	if (H >= 0 && H < 60) {
+		r = C, g = X, b = 0;
+	}
+	else if (H >= 60 && H < 120) {
+		r = X, g = C, b = 0;
+	}
+	else if (H >= 120 && H < 180) {
+		r = 0, g = C, b = X;
+	}
+	else if (H >= 180 && H < 240) {
+		r = 0, g = X, b = C;
+	}
+	else if (H >= 240 && H < 300) {
+		r = X, g = 0, b = C;
+	}
+	else {
+		r = C, g = 0, b = X;
+	}
+	int R = (r + m) * 255;
+	int G = (g + m) * 255;
+	int B = (b + m) * 255;
+	rgb[0] = R;
+	rgb[1] = G;
+	rgb[2] = B;
 }

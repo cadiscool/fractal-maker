@@ -1,54 +1,14 @@
 #include <iostream>
-
+#include "bitmap.h"
 #include <math.h>
-
-
-int * HSVtoRGB(float H, float S, float V) {
-	float s = S / 100;
-	float v = V / 100;
-	float C = s * v;
-	float X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
-	float m = v - C;
-	float r, g, b;
-	if (H >= 0 && H < 60) {
-		r = C, g = X, b = 0;
-	}
-	else if (H >= 60 && H < 120) {
-		r = X, g = C, b = 0;
-	}
-	else if (H >= 120 && H < 180) {
-		r = 0, g = C, b = X;
-	}
-	else if (H >= 180 && H < 240) {
-		r = 0, g = X, b = C;
-	}
-	else if (H >= 240 && H < 300) {
-		r = X, g = 0, b = C;
-	}
-	else {
-		r = C, g = 0, b = X;
-	}
-	int R = (r + m) * 255;
-	int G = (g + m) * 255;
-	int B = (b + m) * 255;
-	int rgb[3] = {R,G,B};
-	return rgb;
-}
+using namespace std;
 
 
 unsigned char clamp(int num) {
-	if (num > 255) {
-		return 255;
-	}
-	if (num < 0) {
-		return 0;
-	}
-	return num;
+	return (num > 255)*255 + (num > 255)*-1*num + (num < 0)*-1*num + num;
 }
 
-
-
-int ismandel(double xR, double yI) {
+int mandelGen(double xR, double yI) {
 
 	double zR = 0;
 	double zI = 0;
@@ -57,88 +17,38 @@ int ismandel(double xR, double yI) {
 			return n;
 		}
 		double zRold = zR;
-		zR = pow(zR, 2.0) - pow(zI, 2.0)  + xR;
+		zR = pow(zR, 2) - pow(zI, 2.0)  + xR;
 		zI = (2.0 * zRold * zI) + yI;
 
 	}
-	return 0;
+	return 255;
 }
 
 int main() {
+	int width = 10000; //Initialize image dimensions
+	int height = 10000;
+	double canvas[4] = {0,1, 0,1 }; // x1, x2, y1, y2  Defines a canvas to work on, bottom left corner is x1, y1
+	char* name = "pleaseWork.bmp";
+	Bitmap image = Bitmap(width, height, name); //Creates a new bitmap image
+	double deltaX = (canvas[1]- canvas[0]) / double(width); //Calculates x and y increment for each pixel 
+	double deltaY = (canvas[3]- canvas[2]) / double(height);
 
-	int w = 8000;
-	int h = 8000;
-	float rW = (float)w;
-	float rH = (float)h;
-
-	//Initialize shit
-	FILE* f;
-	unsigned char* img = NULL; //Creates pointer towards start of image mem address
-	int filesize = 54 + 3 * (w + (w % 4)) * h; //Defines size of file in bytes, 54 bytes allocated for header data
-	img = (unsigned char*)malloc(3 * (w+ (w % 4)) * h ); //Allocates bytes for the pixel data, typecasts to a pointer to store in img
-	memset(img, 0, 3 * (w + (w % 4)) * h );
-
-
-	//Utility arrays
-	unsigned char bmpfileheader[14] = { 'B','M', 
-		0,0,0,0, //These will be set to the size of the file in bytes
-		0,0,0,0, //Reserved?
-		54,0,0,0 //Start of pixel array
-	};
-	unsigned char bmpinfoheader[40] = {
-		40,0,0,0, //Size of info header
-		0,0,0,0, //Image Width
-		0,0,0,0, //Image Height
-		1,0, //Number of color planes
-		24,0 //Bits per pixel, set to 8 bits per pixel (0-256)
-	};
-	//Generate the shit
-	long int current_count = 0;
-	
-	for (int yaxis = 0; yaxis < h; yaxis++) { 
-		for (int i = 0; i < w; i++) {
-			int x = i;
-			int y = yaxis;
-			int rX = x - w/2;
-			//std::cout << rX << std::endl;
-			int rY = y - h/2;
-			float mandy = ismandel(0.0004*rX, 0.0004*rY);
-			//std::cout << x << std::endl;
-			int* rgb = HSVtoRGB(mandy, 75, (mandy*-1 + 100));
-			img[current_count++] = clamp(1.2*rgb[2]); //B
-			img[current_count++] = clamp(0.2*rgb[1]); //G
-			img[current_count++] = clamp(0.4*rgb[0]); //R
-			
-
+	for(int h = 0; h<height; h++){
+		cout << h <<endl;
+		for(int w = 0; w<width; w++){
+			double x = w*deltaX + canvas[0]; //Calculate x and y coordinates
+			double y = h*deltaY + canvas[2];
+			double hue = clamp(18*mandelGen(x, y)); //Use fractal to generate a hue, note that this is clamped below 255
+			double hsv[3] = {hue, 50, 50}; //create an hsv array
+			int rgb[3]; //create an rgb array
+			HSVtoRGB(hsv, rgb); //converts contents of hsv array, stores them in pointer from rgb array 
+			image.putPixel(w,h,rgb); //write pixel to memory 
 		}
-		if ((w % 4) != 0) {
-			for(int e = 0; e<(w%4); e++){ img[current_count++] = (unsigned char)(0); }
-		}
+
 	}
-	
-	//std::cout << "HERE" << std::endl;
-	//Fixe the file header
-	bmpfileheader[2] = (unsigned char)(filesize);
-	bmpfileheader[3] = (unsigned char)(filesize >> 8);
-	bmpfileheader[4] = (unsigned char)(filesize >> 16);
-	bmpfileheader[5] = (unsigned char)(filesize >> 24);
 
-	bmpinfoheader[4] = (unsigned char)(w);
-	bmpinfoheader[5] = (unsigned char)(w >> 8);
-	bmpinfoheader[6] = (unsigned char)(w >> 16);
-	bmpinfoheader[7] = (unsigned char)(w >> 24);
-	bmpinfoheader[8] = (unsigned char)(h);
-	bmpinfoheader[9] = (unsigned char)(h >> 8);
-	bmpinfoheader[10] = (unsigned char)(h >> 16);
-	bmpinfoheader[11] = (unsigned char)(h >> 24);
+	image.closeBitmap(); //writes data to memory
 
-	//write the fucking data
-	fopen_s(&f, "red.bmp", "wb");
-	fwrite(bmpfileheader, 1, 14, f);
-	fwrite(bmpinfoheader, 1, 40, f);
-	fwrite(img, 1,current_count, f);
-	free(img);
-	std::cout << w % 4 << std::endl;
-	fclose(f);
+	return 0;
 	
 }
