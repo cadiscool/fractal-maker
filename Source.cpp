@@ -94,37 +94,8 @@ int main() {
 	};
 	//Generate the shit
 	long int current_count = 0;
-	/*
-
-	img[0] = (unsigned char)(255); //B
-	img[1] = (unsigned char)(255); //G
-	img[2] = (unsigned char)(255); //R
-	current_count += 3;
-	img[3] = (unsigned char)(255);
-	img[4] = (unsigned char)(255);
-	img[5] = (unsigned char)(255);
-	current_count += 3;
-	img[6] = (unsigned char)(00);
-	img[7] = (unsigned char)(00);
-	//img[8] = (unsigned char)(00);
-	current_count += 2;
-	img[8] = (unsigned char)(255);
-	img[9] = (unsigned char)(255);
-	img[10] = (unsigned char)(255);
-	current_count += 3;
-	img[11] = (unsigned char)(255);
-	img[12] = (unsigned char)(255);
-	img[13] = (unsigned char)(255);
-	current_count += 3;
-	img[14] = (unsigned char)(00);
-	img[15] = (unsigned char)(00);
-	current_count += 2;
-	*/
 	
 	for (int yaxis = 0; yaxis < h; yaxis++) { 
-		//img[++current_count] = (unsigned char)(255);
-		//img[++current_count] = (unsigned char)(0);
-		//img[++current_count] = (unsigned char)(0);
 		for (int i = 0; i < w; i++) {
 			int x = i;
 			int y = yaxis;
