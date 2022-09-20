@@ -5,7 +5,7 @@ using namespace std;
 
 
 class Bitmap{
-	public: 
+	private:
 		int width;
 		int height;
 		int bufferCount; //Bitmaps have a series of buffer bits at the end of each row of pixels
@@ -15,6 +15,7 @@ class Bitmap{
 		int fileSize;
 		int dataSize;
 
+	public: 
 		Bitmap(int w, int h, char* sname){
 
 			width = w;
@@ -63,9 +64,10 @@ class Bitmap{
 		}
 
 		void putPixel(int w, int h, int* rgb){
-			address[w*3 + ((width*3+bufferCount) * h)] = (unsigned char)rgb[0]; //red
-			address[w*3 + ((width*3+bufferCount) * h) + 1] = (unsigned char)rgb[1]; //green
-			address[w*3 + ((width*3+bufferCount) * h) + 2] = (unsigned char)rgb[2]; //blue
+			int index = w*3 + ((width*3+bufferCount) * h);
+			address[index] = (unsigned char)rgb[0]; //red
+			address[index + 1] = (unsigned char)rgb[1]; //green
+			address[index + 2] = (unsigned char)rgb[2]; //blue
 		}
 
 		void closeBitmap(){
@@ -76,28 +78,28 @@ class Bitmap{
 };
 
 void HSVtoRGB(double *hsv, int *rgb) {
-	double H = hsv[0];
-	double S = hsv[1];
-	double V = hsv[2];
-	double s = S / 100;
-	double v = V / 100;
+	//double H = hsv[0];
+	//double S = hsv[1];
+	//double V = hsv[2];
+	double s = hsv[1] / 100;
+	double v = hsv[2] / 100;
 	double C = s * v;
-	double X = C * (1 - abs(fmod(H / 60.0, 2) - 1));
+	double X = C * (1 - abs(fmod(hsv[0] / 60.0, 2) - 1));
 	double m = v - C;
 	double r, g, b;
-	if (H >= 0 && H < 60) {
+	if (hsv[0] >= 0 && hsv[0] < 60) {
 		r = C, g = X, b = 0;
 	}
-	else if (H >= 60 && H < 120) {
+	else if (hsv[0] >= 60 && hsv[0] < 120) {
 		r = X, g = C, b = 0;
 	}
-	else if (H >= 120 && H < 180) {
+	else if (hsv[0] >= 120 && hsv[0] < 180) {
 		r = 0, g = C, b = X;
 	}
-	else if (H >= 180 && H < 240) {
+	else if (hsv[0] >= 180 && hsv[0] < 240) {
 		r = 0, g = X, b = C;
 	}
-	else if (H >= 240 && H < 300) {
+	else if (hsv[0] >= 240 && hsv[0] < 300) {
 		r = X, g = 0, b = C;
 	}
 	else {
