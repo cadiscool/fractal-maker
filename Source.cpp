@@ -50,7 +50,6 @@ int main() {
 	int width = 10000; //Initialize image dimensions
 	int height = 10000;
 	double canvas[4] = {0.836,0.837, 0.222, 0.223 };
-	//double canvas[4] = {0.45,0.65, 0.84,1.05 }; // x1, x2, y1, y2  Defines a canvas to work on, bottom left corner is x1, y1
 	char* name = "cmplxCos2-10000x10000.bmp";
 	Bitmap image = Bitmap(width, height, name); //Creates a new bitmap image
 	double deltaX = (canvas[1]- canvas[0]) / double(width); //Calculates x and y increment for each pixel 
